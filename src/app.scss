@@ -1,0 +1,18 @@
+.btn {
+  cursor: pointer;
+  outline: none;
+  border-radius: 8px;
+  padding: 8px 25px;
+  background-color: rgba(220, 220, 220, 0.39);
+  border: none;
+  font-size: 16px;
+  transition: all 0.7s;
+  color: #0a0a0a;
+  letter-spacing: 4px;
+  text-decoration: none;
+  box-shadow: 2px 3px 5px 0 rgba(10, 10, 10, 0.3), inset -1px -1px 4px 1px #9E9E9E;
+  &:hover {
+    color: #fff;
+    background: radial-gradient(rgba(74, 72, 72, 0.8), #2f333e);
+  }
+}
