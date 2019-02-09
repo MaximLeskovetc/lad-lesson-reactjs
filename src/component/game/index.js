@@ -1,92 +1,51 @@
 import React, {Component} from "react";
 import Table from "../table";
 import {Redirect} from "react-router-dom";
+import axios from 'axios';
 
-class Game extends Component {
+export default class Game extends Component {
     state = {
-        field: [
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0]
-        ],
+        field: [],
         player: 1,
-        game: true
+        game: true,
+        loaded: false
+    };
+
+    componentDidMount() {
+        this.resetField();
+        this.updateField();
+        setInterval(this.updateField, 1000);
+    }
+
+    updateField = () => {
+        axios.get('http://localhost:5000/field').then((response) => {
+            this.setState({
+                field: response.data,
+                loaded: true
+            });
+        });
     };
 
     clickColumn = i => {
         if (this.state.game) {
-            const newField = [...this.state.field];
-            if (newField[i].lastIndexOf(0) >= 0) {
-                const horizontal = [];
-                const mainDiagonal = [];
-                const sideDiagonal = [];
-                newField[i][newField[i].lastIndexOf(0)] = this.state.player;
-                newField.forEach(field => {
-                    horizontal.push(field[newField[i].lastIndexOf(0) + 1]);
+            axios.post('http://localhost:5000/move', {column: i, player: this.state.player}).then((response) => {
+                this.setState({
+                    field: response.data.field,
+                    player: response.data.player,
+                    game: response.data.game
                 });
-
-                for (
-                    let x = 0, y = newField[i].lastIndexOf(0) + 1 + i;
-                    y >= 0;
-                    x++, y--
-                ) {
-                    if (newField[x] !== undefined && newField[x][y] !== undefined) {
-                        mainDiagonal.push(newField[x][y]);
-                    }
-                }
-
-                for (
-                    let x = 0, y = newField[i].lastIndexOf(0) + 1 - i;
-                    x < newField.length && y <= newField[i].length;
-                    x++, y++
-                ) {
-                    if (newField[x][y] !== undefined) {
-                        sideDiagonal.push(newField[x][y]);
-                    }
-                }
-
-                this.setState({field: newField});
-                if (
-                    this.checkGame(newField[i]) ||
-                    this.checkGame(horizontal) ||
-                    this.checkGame(sideDiagonal) ||
-                    this.checkGame(mainDiagonal)
-                ) {
-                    this.setState({game: false});
-                } else {
-                    this.setState({
-                        player: this.state.game && this.state.player === 1 ? 2 : 1
-                    });
-                }
-            }
+            });
         }
     };
 
-    checkGame(field) {
-        if (this.state.game) {
-            let count = 0;
-            let maxCount = 0;
-            field.forEach(cell => {
-                if (cell === this.state.player) {
-                    count++;
-                    maxCount = maxCount < count ? count : maxCount;
-                } else {
-                    count = 0;
-                }
-            });
-            return maxCount === 4;
-        }
-    }
-
     resetField = () => {
-        this.setState({
-            field: [...this.state.field].map(_ => [0, 0, 0, 0, 0, 0]),
-            player: 1,
-            game: true
+        axios.get('http://localhost:5000/clear').then((response) => {
+            this.setState({
+                field: response.data,
+                loaded: true,
+                player: 1,
+                game: true
+            });
         });
     };
 
@@ -98,7 +57,7 @@ class Game extends Component {
             return <Redirect to="/"/>;
         }
         return (
-            <>
+            this.state.loaded ?
                 <Table
                     game={this.state.game}
                     field={this.state.field}
@@ -106,10 +65,8 @@ class Game extends Component {
                     playersName={[this.props.location.state.playerOne, this.props.location.state.playerTwo]}
                     onClickColumn={this.clickColumn}
                     resetField={this.resetField}
-                />
-            </>
+                /> :
+                <p>Loading</p>
         );
     }
 }
-
-export default Game;
